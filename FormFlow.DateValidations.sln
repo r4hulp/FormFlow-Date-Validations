@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormFlow.DateValidations", "FormFlow.DateValidations\FormFlow.DateValidations.csproj", "{05C7334B-3CCC-4500-89EA-8A640E4BA7C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05C7334B-3CCC-4500-89EA-8A640E4BA7C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05C7334B-3CCC-4500-89EA-8A640E4BA7C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05C7334B-3CCC-4500-89EA-8A640E4BA7C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05C7334B-3CCC-4500-89EA-8A640E4BA7C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AF6A9B79-B1C3-44B9-8018-CB7D0BF099C2}
+	EndGlobalSection
+EndGlobal

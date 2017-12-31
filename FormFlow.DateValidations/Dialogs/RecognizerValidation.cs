@@ -9,6 +9,7 @@ using System.Web;
 
 namespace FormFlow.DateValidations.Dialogs
 {
+    [Serializable]
     public class RecognizerValidation : IDialog<object>
     {
         public async Task StartAsync(IDialogContext context)
@@ -16,12 +17,12 @@ namespace FormFlow.DateValidations.Dialogs
             try
             {
 
-                var form = new FormDialog<Leave>(
-                new Leave(),
-                Leave.BuildForm,
+                var form = new FormDialog<SmartLeave>(
+                new SmartLeave(),
+                SmartLeave.BuildSimpleForm,
                 FormOptions.PromptInStart);
 
-                context.Call<Leave>(form, this.AfterLeaveFormAsync);
+                context.Call<SmartLeave>(form, this.AfterLeaveFormAsync);
 
             }
             catch (Exception ex)
@@ -31,7 +32,7 @@ namespace FormFlow.DateValidations.Dialogs
             }
         }
 
-        private async Task AfterLeaveFormAsync(IDialogContext context, IAwaitable<Leave> result)
+        private async Task AfterLeaveFormAsync(IDialogContext context, IAwaitable<SmartLeave> result)
         {
             var message = await result;
 

@@ -9,6 +9,7 @@ using System.Web;
 
 namespace FormFlow.DateValidations.Dialogs
 {
+    [Serializable]
     public class SimpleValidation : IDialog<object>
     {
         public async Task StartAsync(IDialogContext context)
@@ -17,7 +18,7 @@ namespace FormFlow.DateValidations.Dialogs
             {
                 var form = new FormDialog<Leave>(
                 new Leave(),
-                Leave.BuildForm,
+                Leave.BuildSimpleForm,
                 FormOptions.PromptInStart);
 
                 context.Call<Leave>(form, this.AfterLeaveFormAsync);

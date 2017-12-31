@@ -9,144 +9,138 @@ using System.Web;
 
 namespace FormFlow.DateValidations.Forms
 {
-    public enum LeaveTypeOptions
-    {
-        PaidLeave = 1,
-        SickLeave = 2,
-        LossOfPay = 3,
-        CompOff = 5
-    }
 
 
     [Serializable]
-    public class Leave
+    public class SmartLeave
     {
         [Prompt("Type of leave {||}")]
         public LeaveTypeOptions LossType;
 
         [Prompt("Vacations from date (e.g. 12 January 2018) {||}")]
-        public DateTime From;
+        public string From;
 
         [Prompt("To date (e.g. 16 January 2018) {||}")]
-        public DateTime To;
+        public string To;
 
         [Prompt("Do you want to skip weekends in calculation of your leaves duration? {||}")]
         public bool SkipWeekends;
 
+
         [Prompt("How many days?")]
         public int Days { get; set; }
 
-        public static IForm<Leave> BuildSimpleForm()
+        public static IForm<SmartLeave> BuildSimpleForm()
         {
-            OnCompletionAsyncDelegate<Leave> wrapUpRequest = async (context, state) =>
+            OnCompletionAsyncDelegate<SmartLeave> wrapUpRequest = async (context, state) =>
             {
-                string wrapUpMessage = $"You are going on leaves for {state.Days} days starting from {state.From.ToShortDateString()} to {state.To.ToShortDateString()}.";
+                string wrapUpMessage = $"You are going on leaves for {state.Days} days starting from {DateTime.Parse(state.From).ToShortDateString()} to {DateTime.Parse(state.To).ToShortDateString()}.";
 
                 var msg = context.MakeMessage();
                 msg.Text = wrapUpMessage;
                 await context.PostAsync(msg);
-
             };
-            return new FormBuilder<Leave>()
-                .Field(nameof(LossType))
-                .Field(nameof(From),
-                    validate: async (state, value) =>
-                    {
-                        DateTime _val = (DateTime)value;
-                        if (_val < DateTime.Now.Date)
-                        {
-                            return new ValidateResult() { IsValid = false, Feedback = "From date can not be from past." };
-                        }
 
-                        if (state.To != DateTime.MinValue)
-                        {
-                            if (_val > state.To)
-                            {
-                                return new ValidateResult() { IsValid = false, Feedback = "From date can not greater than To date." };
-                            }
-
-                        }
-                        return new ValidateResult() { IsValid = true, Value = value };
-                    })
-                .Field(nameof(To),
-                    validate: async (state, value) =>
-                    {
-                        DateTime _val = (DateTime)value;
-                        if (_val < state.From)
-                        {
-                            return new ValidateResult() { IsValid = false, Feedback = "To date can not be less than From date." };
-                        }
-                        return new ValidateResult() { IsValid = true, Value = value };
-                    })
-                .Field(nameof(SkipWeekends))
-                .Confirm(async (state) =>
-                {
-                    int days = (state.To - state.From).Days;
-                    if (state.SkipWeekends)
-                    {
-                        days = BusinessDaysUntil(state.From, state.To);
-                    }
-
-                    state.Days = days;
-
-                    return new PromptAttribute($"You are applying for total {days} days. Are you sure? {{||}}");
-                })
-                .OnCompletion(wrapUpRequest)
-                .Build();
-        }
-
-        public static IForm<Leave> BuildSmartForm()
-        {
-            OnCompletionAsyncDelegate<Leave> wrapUpRequest = async (context, state) =>
-            {
-                string wrapUpMessage = $"You are going on leaves for {state.Days} days starting from {state.From.ToShortDateString()} to {state.To.ToShortDateString()}.";
-
-                var msg = context.MakeMessage();
-                msg.Text = wrapUpMessage;
-                await context.PostAsync(msg);
-
-            };
-            return new FormBuilder<Leave>()
+            return new FormBuilder<SmartLeave>()
                 .Field(nameof(LossType))
                 .Field(nameof(From),
                     validate: async (state, value) =>
                     {
                         var myCulture = Culture.English;
                         var model = DateTimeRecognizer.GetInstance().GetDateTimeModel(myCulture);
+                        var results = model.Parse(value.ToString());
 
-                        DateTime _val = (DateTime)value;
+                        DateTime _val = DateTime.MinValue;
+
+                        // Check there are valid results
+                        if (results.Count > 0 && results.First().TypeName.StartsWith("datetimeV2"))
+                        {
+                            var first = results.First();
+                            var resolutionValues = (IList<Dictionary<string, string>>)first.Resolution["values"];
+
+                            var subType = first.TypeName.Split('.').Last();
+                            if (subType.Contains("date") && !subType.Contains("range"))
+                            {
+                                var expectedDate = resolutionValues.Where(v => DateTime.Parse(v["value"]) > DateTime.UtcNow).FirstOrDefault();
+
+                                if(expectedDate == null)
+                                {
+                                    return new ValidateResult() { IsValid = false, Feedback = "No such date found" };
+                                }
+
+                                DateTime.TryParse(expectedDate["value"], out _val);
+                            }
+                        }
+
+                        if(_val == DateTime.MinValue)
+                            return new ValidateResult() { IsValid = false, Feedback = "No such date found" };
+
                         if (_val < DateTime.Now.Date)
                         {
                             return new ValidateResult() { IsValid = false, Feedback = "From date can not be from past." };
                         }
 
-                        if (state.To != DateTime.MinValue)
+                        if (!string.IsNullOrEmpty(state.To))
                         {
-                            if (_val > state.To)
+                            DateTime toDate = DateTime.Parse(state.To);
+                            if (_val > toDate)
                             {
                                 return new ValidateResult() { IsValid = false, Feedback = "From date can not greater than To date." };
                             }
-
                         }
-                        return new ValidateResult() { IsValid = true, Value = value };
+
+                        return new ValidateResult() { IsValid = true, Value = _val.ToString() };
                     })
                 .Field(nameof(To),
                     validate: async (state, value) =>
                     {
-                        DateTime _val = (DateTime)value;
-                        if (_val < state.From)
+                        var myCulture = Culture.English;
+                        var model = DateTimeRecognizer.GetInstance().GetDateTimeModel(myCulture);
+                        var results = model.Parse(value.ToString());
+
+                        DateTime _val = DateTime.MinValue;
+
+                        // Check there are valid results
+                        if (results.Count > 0 && results.First().TypeName.StartsWith("datetimeV2"))
+                        {
+                            var first = results.First();
+                            var resolutionValues = (IList<Dictionary<string, string>>)first.Resolution["values"];
+
+                            var subType = first.TypeName.Split('.').Last();
+                            if (subType.Contains("date") && !subType.Contains("range"))
+                            {
+                                var expectedDate = resolutionValues.Where(v => DateTime.Parse(v["value"]) > DateTime.UtcNow).FirstOrDefault();
+
+                                if (expectedDate == null)
+                                {
+                                    return new ValidateResult() { IsValid = false, Feedback = "No such date found" };
+                                }
+
+                                DateTime.TryParse(expectedDate["value"], out _val);
+                            }
+                        }
+
+                        if (_val == DateTime.MinValue)
+                            return new ValidateResult() { IsValid = false, Feedback = "No such date found" };
+
+                        DateTime fromDate = DateTime.Parse(state.From);
+                        if (_val < fromDate)
                         {
                             return new ValidateResult() { IsValid = false, Feedback = "To date can not be less than From date." };
                         }
-                        return new ValidateResult() { IsValid = true, Value = value };
+                        return new ValidateResult() { IsValid = true, Value = _val.ToString() };
                     })
                 .Field(nameof(SkipWeekends))
                 .Confirm(async (state) =>
                 {
-                    int days = (state.To - state.From).Days + 1;
+                    DateTime from = DateTime.Parse(state.From);
+
+                    DateTime to = DateTime.Parse(state.To);
+
+                    int days = (to - from).Days + 1;
                     if (state.SkipWeekends)
                     {
-                        days = BusinessDaysUntil(state.From, state.To);
+                        days = BusinessDaysUntil(from, to);
                     }
 
                     state.Days = days;
@@ -156,6 +150,7 @@ namespace FormFlow.DateValidations.Forms
                 .OnCompletion(wrapUpRequest)
                 .Build();
         }
+
 
         /// <summary>
         /// Calculates number of business days, taking into account:

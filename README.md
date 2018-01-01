@@ -1,7 +1,5 @@
 # Bot Framework FormFlow with date range validation
 
-[![N|Solid](https://img.shields.io/badge/blog--at-wrapcode-red.svg?style=flat-square)](http://www.wrapcode.com/bot-framework-dependency-injection/?target=_blank)
-
 
 A Bot Framework application that demonstrates different ways of **validating date ranges** in Bot Framework [FormFlow][df1] feature.
 
